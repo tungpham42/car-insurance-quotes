@@ -42,6 +42,14 @@ const QuoteResults: React.FC<{ data: FormData; onReset: () => void }> = ({
     setIsModalOpen(true);
   };
 
+  // Helper to open the link
+  const handleGoToSite = () => {
+    if (selectedQuote?.url) {
+      window.open(selectedQuote.url, "_blank"); // Opens in new tab
+      setIsModalOpen(false); // Optionally close modal
+    }
+  };
+
   if (loading)
     return (
       <div style={{ textAlign: "center", padding: "80px 20px" }}>
@@ -102,7 +110,6 @@ const QuoteResults: React.FC<{ data: FormData; onReset: () => void }> = ({
                     gap: 20,
                   }}
                 >
-                  {/* LOGO & NAME */}
                   <div
                     style={{
                       display: "flex",
@@ -135,7 +142,6 @@ const QuoteResults: React.FC<{ data: FormData; onReset: () => void }> = ({
                     </div>
                   </div>
 
-                  {/* COVERAGE DETAILS */}
                   <div style={{ minWidth: 200, flex: 2 }}>
                     <Tag color="blue" style={{ marginBottom: 8 }}>
                       {item.coverageType}
@@ -156,7 +162,6 @@ const QuoteResults: React.FC<{ data: FormData; onReset: () => void }> = ({
                     </div>
                   </div>
 
-                  {/* PRICE & BUTTON */}
                   <div style={{ textAlign: "right", minWidth: 150 }}>
                     <Title level={2} style={{ color: "#4f46e5", margin: 0 }}>
                       ${item.price}
@@ -198,11 +203,7 @@ const QuoteResults: React.FC<{ data: FormData; onReset: () => void }> = ({
             title="Great Choice!"
             subTitle={`You are redirecting to ${selectedQuote.provider} to finalize your ${selectedQuote.coverageType} policy for $${selectedQuote.price}/mo.`}
             extra={[
-              <Button
-                type="primary"
-                key="console"
-                onClick={() => window.location.reload()}
-              >
+              <Button type="primary" key="console" onClick={handleGoToSite}>
                 Finish at {selectedQuote.provider}
               </Button>,
             ]}

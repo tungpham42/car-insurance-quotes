@@ -1,31 +1,35 @@
 import { Handler } from "@netlify/functions";
 
-// Real Provider Data (Logos from Wikimedia Commons)
+// Real Provider Data
 const PROVIDERS = [
   {
     name: "Geico",
     logo: "https://upload.wikimedia.org/wikipedia/commons/d/d2/Geico_logo.svg",
-    baseFactor: 0.85, // Competitively priced
+    url: "https://www.geico.com",
+    baseFactor: 0.85,
     minAge: 16,
     toleratesIncidents: true,
   },
   {
     name: "State Farm",
     logo: "https://upload.wikimedia.org/wikipedia/commons/9/9a/State_Farm_logo.svg",
+    url: "https://www.statefarm.com",
     baseFactor: 1.0,
     minAge: 18,
-    toleratesIncidents: false, // Stricter underwriting
+    toleratesIncidents: false,
   },
   {
     name: "Progressive",
     logo: "https://upload.wikimedia.org/wikipedia/commons/d/d8/Logo_of_the_Progressive_Corporation.svg",
+    url: "https://www.progressive.com",
     baseFactor: 0.95,
     minAge: 16,
-    toleratesIncidents: true, // Known for high-risk acceptance
+    toleratesIncidents: true,
   },
   {
     name: "Allstate",
     logo: "https://upload.wikimedia.org/wikipedia/en/3/30/Allstate_logo.svg",
+    url: "https://www.allstate.com",
     baseFactor: 1.1,
     minAge: 18,
     toleratesIncidents: true,
@@ -33,6 +37,7 @@ const PROVIDERS = [
   {
     name: "Liberty Mutual",
     logo: "https://upload.wikimedia.org/wikipedia/en/5/5a/Liberty_Mutual_Insurance_logo.svg",
+    url: "https://www.libertymutual.com",
     baseFactor: 1.05,
     minAge: 21,
     toleratesIncidents: false,
@@ -49,13 +54,10 @@ export const handler: Handler = async (event) => {
     // --- 1. RISK CALCULATION ---
     let riskScore = 1.0;
 
-    // Age penalty
     if (data.driverAge < 25) riskScore += 0.5;
     if (data.driverAge > 70) riskScore += 0.2;
 
-    // Vehicle penalty (Luxury cars)
     const luxuryBrands = [
-      // German & European luxury
       "AUDI",
       "BMW",
       "MERCEDES-BENZ",
@@ -68,40 +70,30 @@ export const handler: Handler = async (event) => {
       "MASERATI",
       "ASTON MARTIN",
       "MCLAREN",
-
-      // Japanese luxury
       "LEXUS",
       "ACURA",
       "INFINITI",
-
-      // American luxury
       "CADILLAC",
       "LINCOLN",
-
-      // Electric / ultra-modern luxury
       "TESLA",
       "LUCID",
       "RIVIAN",
     ];
     if (luxuryBrands.includes(data.carMake?.toUpperCase())) riskScore += 0.4;
 
-    // Incident penalty
     const incidents = data.incidents || [];
     if (incidents.includes("speeding_major")) riskScore += 0.3;
     if (incidents.includes("accident_fault")) riskScore += 0.5;
     if (incidents.includes("dui")) riskScore += 1.5;
 
     // --- 2. GENERATE QUOTES ---
-    const basePrice = 120; // National averageish base
+    const basePrice = 120;
     const quotes = PROVIDERS.filter((p) => {
-      // Filter logic: Some providers reject high risk or young drivers
       if (incidents.includes("dui") && !p.toleratesIncidents) return false;
       if (data.driverAge < p.minAge) return false;
       return true;
     })
       .map((p, index) => {
-        // Calculate specific price for this provider
-        // Random variance so it looks organic (+/- 10%)
         const variance = 0.9 + Math.random() * 0.2;
         const finalPrice = Math.round(
           basePrice * riskScore * p.baseFactor * variance
@@ -111,8 +103,9 @@ export const handler: Handler = async (event) => {
           id: `quote-${index}`,
           provider: p.name,
           logo: p.logo,
+          url: p.url, // Pass the URL here
           price: finalPrice,
-          rating: 4.0 + Number(Math.random().toFixed(1)), // 4.0 - 5.0
+          rating: 4.0 + Number(Math.random().toFixed(1)),
           coverageType:
             finalPrice > 250 ? "Premium Coverage" : "Standard Coverage",
           limits: finalPrice > 250 ? "100/300/100" : "50/100/50",
@@ -123,9 +116,8 @@ export const handler: Handler = async (event) => {
           ],
         };
       })
-      .sort((a, b) => a.price - b.price); // Show cheapest first
+      .sort((a, b) => a.price - b.price);
 
-    // Simulate API network delay
     await new Promise((resolve) => setTimeout(resolve, 1200));
 
     return {

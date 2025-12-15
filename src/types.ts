@@ -9,11 +9,12 @@ export interface FormData {
 
 export interface Quote {
   id: string;
-  provider: string; // e.g. "Geico"
-  logo: string; // URL to logo image
+  provider: string;
+  logo: string;
+  url: string; // New field for the website link
   price: number;
-  coverageType: string; // e.g. "Premium", "Standard"
-  limits: string; // e.g. "100/300/100"
+  coverageType: string;
+  limits: string;
   rating: number;
   perks: string[];
 }
