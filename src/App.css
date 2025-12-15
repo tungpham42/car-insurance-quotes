@@ -1,0 +1,69 @@
+/* src/index.css */
+@import "antd/dist/reset.css";
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap");
+
+:root {
+  --primary-color: #4f46e5; /* Modern Indigo */
+  --secondary-color: #818cf8;
+  --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1),
+    0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  --glass-bg: rgba(255, 255, 255, 0.95);
+}
+
+body {
+  background: var(--bg-gradient);
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    sans-serif;
+  min-height: 100vh;
+}
+
+/* Customizing Ant Design Steps */
+.ant-steps-item-process .ant-steps-item-icon {
+  background: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+}
+
+.ant-steps-item-finish .ant-steps-item-icon {
+  border-color: var(--primary-color) !important;
+}
+.ant-steps-item-finish .ant-steps-item-icon > .ant-steps-icon {
+  color: var(--primary-color) !important;
+}
+
+/* Smooth fade in animation for step content */
+.step-content-enter {
+  animation: fadeIn 0.4s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Modern Card Styling */
+.glass-card {
+  background: var(--glass-bg) !important;
+  border-radius: 16px !important;
+  box-shadow: var(--card-shadow) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  backdrop-filter: blur(10px);
+}
+
+.custom-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.custom-header h1 {
+  font-weight: 800;
+  color: #1f2937;
+  letter-spacing: -0.025em;
+  margin-bottom: 0.5rem;
+}
