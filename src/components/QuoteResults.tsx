@@ -9,8 +9,13 @@ import {
   Alert,
   Rate,
   Badge,
+  Modal,
+  Result,
 } from "antd";
-import { CheckCircleFilled } from "@ant-design/icons";
+import {
+  CheckCircleFilled,
+  SafetyCertificateOutlined,
+} from "@ant-design/icons";
 import { FormData, Quote } from "../types";
 
 const { Title, Text } = Typography;
@@ -22,7 +27,10 @@ const QuoteResults: React.FC<{ data: FormData; onReset: () => void }> = ({
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // ... (Keep your useEffect fetch logic the same) ...
+  // New state for handling the selection
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null);
+
   useEffect(() => {
     fetch("/.netlify/functions/get-quotes", {
       method: "POST",
@@ -30,9 +38,20 @@ const QuoteResults: React.FC<{ data: FormData; onReset: () => void }> = ({
     })
       .then((res) => res.json())
       .then(setQuotes)
-      .catch(() => setQuotes([])) // Simple error handling
+      .catch(() => setQuotes([]))
       .finally(() => setLoading(false));
   }, [data]);
+
+  // Handler for the button click
+  const handleSelectPlan = (quote: Quote) => {
+    setSelectedQuote(quote);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    onReset(); // Optionally reset the form after success
+  };
 
   if (loading)
     return (
@@ -143,6 +162,7 @@ const QuoteResults: React.FC<{ data: FormData; onReset: () => void }> = ({
                     <Button
                       type="primary"
                       size="large"
+                      onClick={() => handleSelectPlan(item)} // Attached Handler Here
                       style={{
                         marginTop: 12,
                         width: "100%",
@@ -165,6 +185,35 @@ const QuoteResults: React.FC<{ data: FormData; onReset: () => void }> = ({
           Start New Quote
         </Button>
       </div>
+
+      {/* Confirmation Modal */}
+      <Modal
+        open={isModalOpen}
+        footer={null}
+        onCancel={() => setIsModalOpen(false)}
+        centered
+      >
+        {selectedQuote && (
+          <Result
+            icon={<SafetyCertificateOutlined style={{ color: "#4f46e5" }} />}
+            status="success"
+            title="Application Started!"
+            subTitle={
+              <span>
+                You have selected <b>{selectedQuote.provider}</b> for{" "}
+                <b>${selectedQuote.price}/mo</b>.
+                <br />
+                An agent will contact you shortly to finalize your policy.
+              </span>
+            }
+            extra={[
+              <Button type="primary" key="console" onClick={handleCloseModal}>
+                Done
+              </Button>,
+            ]}
+          />
+        )}
+      </Modal>
     </div>
   );
 };
