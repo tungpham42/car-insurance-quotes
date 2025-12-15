@@ -12,10 +12,7 @@ import {
   Modal,
   Result,
 } from "antd";
-import {
-  CheckCircleFilled,
-  SafetyCertificateOutlined,
-} from "@ant-design/icons";
+import { CheckCircleOutlined } from "@ant-design/icons";
 import { FormData, Quote } from "../types";
 
 const { Title, Text } = Typography;
@@ -26,8 +23,6 @@ const QuoteResults: React.FC<{ data: FormData; onReset: () => void }> = ({
 }) => {
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // New state for handling the selection
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null);
 
@@ -42,15 +37,9 @@ const QuoteResults: React.FC<{ data: FormData; onReset: () => void }> = ({
       .finally(() => setLoading(false));
   }, [data]);
 
-  // Handler for the button click
   const handleSelectPlan = (quote: Quote) => {
     setSelectedQuote(quote);
     setIsModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    onReset(); // Optionally reset the form after success
   };
 
   if (loading)
@@ -58,9 +47,11 @@ const QuoteResults: React.FC<{ data: FormData; onReset: () => void }> = ({
       <div style={{ textAlign: "center", padding: "80px 20px" }}>
         <Spin size="large" />
         <Title level={4} style={{ marginTop: 20, color: "#4f46e5" }}>
-          Analyzing 50+ providers...
+          Scanning Provider Networks...
         </Title>
-        <Text>Please wait while we calculate your risk profile.</Text>
+        <Text>
+          Checking rates with Geico, Progressive, State Farm, and more.
+        </Text>
       </div>
     );
 
@@ -68,9 +59,9 @@ const QuoteResults: React.FC<{ data: FormData; onReset: () => void }> = ({
     return (
       <div style={{ textAlign: "center", padding: 40 }}>
         <Alert
-          message="No quotes available"
-          description="Based on the data provided, we couldn't find a matching provider instantly."
-          type="warning"
+          message="High Risk Profile"
+          description="We could not find online quotes for this profile. Please call 1-800-INSURE-ME."
+          type="error"
           showIcon
         />
         <Button onClick={onReset} style={{ marginTop: 20 }}>
@@ -80,95 +71,103 @@ const QuoteResults: React.FC<{ data: FormData; onReset: () => void }> = ({
     );
 
   return (
-    <div style={{ maxWidth: 700, margin: "0 auto" }}>
+    <div style={{ maxWidth: 800, margin: "0 auto" }}>
       <div style={{ textAlign: "center", marginBottom: 30 }}>
-        <Title level={2} style={{ marginBottom: 0 }}>
-          🎉 Success!
-        </Title>
+        <Title level={2}>Your Top Matches</Title>
         <Text type="secondary">
-          We found {quotes.length} great options for you.
+          We found {quotes.length} policies starting at ${quotes[0].price}/mo.
         </Text>
       </div>
 
       <List
-        grid={{ gutter: 24, xs: 1, sm: 1, md: 1, lg: 1, xl: 1, xxl: 1 }}
+        grid={{ gutter: 24, column: 1 }}
         dataSource={quotes}
         renderItem={(item, index) => (
           <List.Item>
             <Badge.Ribbon
-              text={index === 0 ? "Best Value" : "Recommended"}
-              color={index === 0 ? "#10b981" : "blue"}
-              style={{ display: index > 1 ? "none" : "block" }}
+              text={index === 0 ? "Cheapest" : "Best Value"}
+              color={index === 0 ? "#10b981" : "transparent"}
+              style={{
+                display: index > 1 ? "none" : "block",
+                color: index === 1 ? "#000" : "#fff",
+              }}
             >
-              <Card
-                hoverable
-                style={{
-                  borderRadius: 12,
-                  border: "1px solid #e5e7eb",
-                  overflow: "hidden",
-                }}
-                bodyStyle={{ padding: "24px" }}
-              >
+              <Card hoverable style={{ borderRadius: 12, overflow: "hidden" }}>
                 <div
                   style={{
                     display: "flex",
-                    justifyContent: "space-between",
                     alignItems: "center",
+                    justifyContent: "space-between",
                     flexWrap: "wrap",
-                    gap: 16,
+                    gap: 20,
                   }}
                 >
-                  {/* Left: Provider Info */}
-                  <div style={{ flex: 1, minWidth: 200 }}>
-                    <Title level={3} style={{ margin: 0, color: "#1f2937" }}>
-                      {item.provider}
-                    </Title>
-                    <div style={{ marginBottom: 8 }}>
+                  {/* LOGO & NAME */}
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      minWidth: 200,
+                      flex: 1,
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: 60,
+                        height: 60,
+                        borderRadius: 8,
+                        backgroundImage: `url(${item.logo})`,
+                        backgroundSize: "contain",
+                        backgroundRepeat: "no-repeat",
+                        backgroundPosition: "center",
+                        marginRight: 16,
+                      }}
+                    />
+                    <div>
+                      <Title level={4} style={{ margin: 0 }}>
+                        {item.provider}
+                      </Title>
                       <Rate
                         disabled
                         defaultValue={item.rating}
-                        style={{ fontSize: 14 }}
+                        style={{ fontSize: 12 }}
                       />
-                      <Text type="secondary" style={{ marginLeft: 8 }}>
-                        ({item.rating})
-                      </Text>
-                    </div>
-                    <Tag
-                      color="cyan"
-                      style={{ padding: "4px 8px", borderRadius: 4 }}
-                    >
-                      {item.coverage}
-                    </Tag>
-
-                    <div style={{ marginTop: 12 }}>
-                      <Text type="secondary">
-                        <CheckCircleFilled style={{ color: "#10b981" }} />{" "}
-                        Instant Approval
-                      </Text>
                     </div>
                   </div>
 
-                  {/* Right: Price & Action */}
+                  {/* COVERAGE DETAILS */}
+                  <div style={{ minWidth: 200, flex: 2 }}>
+                    <Tag color="blue" style={{ marginBottom: 8 }}>
+                      {item.coverageType}
+                    </Tag>
+                    <div style={{ fontSize: 12, color: "#666" }}>
+                      <strong>Limits:</strong> {item.limits} (BI/PD/UM)
+                    </div>
+                    <div style={{ marginTop: 8 }}>
+                      {item.perks.map((perk) => (
+                        <Tag
+                          key={perk}
+                          icon={<CheckCircleOutlined />}
+                          bordered={false}
+                        >
+                          {perk}
+                        </Tag>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* PRICE & BUTTON */}
                   <div style={{ textAlign: "right", minWidth: 150 }}>
-                    <Text type="secondary" style={{ display: "block" }}>
-                      Monthly Premium
-                    </Text>
-                    <Title
-                      level={2}
-                      style={{ color: "#4f46e5", margin: 0, fontWeight: 800 }}
-                    >
+                    <Title level={2} style={{ color: "#4f46e5", margin: 0 }}>
                       ${item.price}
                     </Title>
+                    <Text type="secondary">per month</Text>
                     <Button
                       type="primary"
                       size="large"
-                      onClick={() => handleSelectPlan(item)} // Attached Handler Here
-                      style={{
-                        marginTop: 12,
-                        width: "100%",
-                        borderRadius: 6,
-                        fontWeight: 600,
-                      }}
+                      block
+                      style={{ marginTop: 10, borderRadius: 6 }}
+                      onClick={() => handleSelectPlan(item)}
                     >
                       Select Plan
                     </Button>
@@ -181,34 +180,30 @@ const QuoteResults: React.FC<{ data: FormData; onReset: () => void }> = ({
       />
 
       <div style={{ textAlign: "center", marginTop: 30 }}>
-        <Button type="dashed" onClick={onReset} size="large">
+        <Button type="text" onClick={onReset}>
           Start New Quote
         </Button>
       </div>
 
-      {/* Confirmation Modal */}
       <Modal
         open={isModalOpen}
         footer={null}
         onCancel={() => setIsModalOpen(false)}
         centered
+        width={400}
       >
         {selectedQuote && (
           <Result
-            icon={<SafetyCertificateOutlined style={{ color: "#4f46e5" }} />}
             status="success"
-            title="Application Started!"
-            subTitle={
-              <span>
-                You have selected <b>{selectedQuote.provider}</b> for{" "}
-                <b>${selectedQuote.price}/mo</b>.
-                <br />
-                An agent will contact you shortly to finalize your policy.
-              </span>
-            }
+            title="Great Choice!"
+            subTitle={`You are redirecting to ${selectedQuote.provider} to finalize your ${selectedQuote.coverageType} policy for $${selectedQuote.price}/mo.`}
             extra={[
-              <Button type="primary" key="console" onClick={handleCloseModal}>
-                Done
+              <Button
+                type="primary"
+                key="console"
+                onClick={() => window.location.reload()}
+              >
+                Finish at {selectedQuote.provider}
               </Button>,
             ]}
           />
@@ -217,4 +212,5 @@ const QuoteResults: React.FC<{ data: FormData; onReset: () => void }> = ({
     </div>
   );
 };
+
 export default QuoteResults;

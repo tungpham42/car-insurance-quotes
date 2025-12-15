@@ -1,14 +1,59 @@
 import { Handler } from "@netlify/functions";
 
+// Real Provider Data (Logos from Wikimedia Commons)
+const PROVIDERS = [
+  {
+    name: "Geico",
+    logo: "https://upload.wikimedia.org/wikipedia/commons/d/d2/Geico_logo.svg",
+    baseFactor: 0.85, // Competitively priced
+    minAge: 16,
+    toleratesIncidents: true,
+  },
+  {
+    name: "State Farm",
+    logo: "https://upload.wikimedia.org/wikipedia/commons/9/9a/State_Farm_logo.svg",
+    baseFactor: 1.0,
+    minAge: 18,
+    toleratesIncidents: false, // Stricter underwriting
+  },
+  {
+    name: "Progressive",
+    logo: "https://upload.wikimedia.org/wikipedia/commons/d/d8/Logo_of_the_Progressive_Corporation.svg",
+    baseFactor: 0.95,
+    minAge: 16,
+    toleratesIncidents: true, // Known for high-risk acceptance
+  },
+  {
+    name: "Allstate",
+    logo: "https://upload.wikimedia.org/wikipedia/en/3/30/Allstate_logo.svg",
+    baseFactor: 1.1,
+    minAge: 18,
+    toleratesIncidents: true,
+  },
+  {
+    name: "Liberty Mutual",
+    logo: "https://upload.wikimedia.org/wikipedia/en/5/5a/Liberty_Mutual_Insurance_logo.svg",
+    baseFactor: 1.05,
+    minAge: 21,
+    toleratesIncidents: false,
+  },
+];
+
 export const handler: Handler = async (event) => {
   if (event.httpMethod !== "POST")
     return { statusCode: 405, body: "Method Not Allowed" };
 
   try {
     const data = JSON.parse(event.body || "{}");
-    let baseRate = 100;
 
-    // 1. Vehicle Risk (Luxury Tax)
+    // --- 1. RISK CALCULATION ---
+    let riskScore = 1.0;
+
+    // Age penalty
+    if (data.driverAge < 25) riskScore += 0.5;
+    if (data.driverAge > 70) riskScore += 0.2;
+
+    // Vehicle penalty (Luxury cars)
     const luxuryBrands = [
       // German & European luxury
       "AUDI",
@@ -38,62 +83,56 @@ export const handler: Handler = async (event) => {
       "LUCID",
       "RIVIAN",
     ];
+    if (luxuryBrands.includes(data.carMake?.toUpperCase())) riskScore += 0.4;
 
-    if (luxuryBrands.includes(data.carMake?.toUpperCase())) baseRate += 60;
-
-    // 2. Driver Age Risk
-    if (data.driverAge < 25) baseRate *= 1.6;
-    if (data.driverAge > 70) baseRate *= 1.2;
-
-    // 3. Incident History Risk
+    // Incident penalty
     const incidents = data.incidents || [];
-    let riskMultiplier = 1.0;
+    if (incidents.includes("speeding_major")) riskScore += 0.3;
+    if (incidents.includes("accident_fault")) riskScore += 0.5;
+    if (incidents.includes("dui")) riskScore += 1.5;
 
-    if (incidents.includes("speeding_minor")) riskMultiplier += 0.2;
-    if (incidents.includes("speeding_major")) riskMultiplier += 0.4;
-    if (incidents.includes("accident_fault")) riskMultiplier += 0.6;
-    if (incidents.includes("dui")) riskMultiplier += 1.2;
-    if (incidents.includes("suspended")) riskMultiplier += 0.8;
+    // --- 2. GENERATE QUOTES ---
+    const basePrice = 120; // National averageish base
+    const quotes = PROVIDERS.filter((p) => {
+      // Filter logic: Some providers reject high risk or young drivers
+      if (incidents.includes("dui") && !p.toleratesIncidents) return false;
+      if (data.driverAge < p.minAge) return false;
+      return true;
+    })
+      .map((p, index) => {
+        // Calculate specific price for this provider
+        // Random variance so it looks organic (+/- 10%)
+        const variance = 0.9 + Math.random() * 0.2;
+        const finalPrice = Math.round(
+          basePrice * riskScore * p.baseFactor * variance
+        );
 
-    const finalRate = Math.round(baseRate * riskMultiplier);
+        return {
+          id: `quote-${index}`,
+          provider: p.name,
+          logo: p.logo,
+          price: finalPrice,
+          rating: 4.0 + Number(Math.random().toFixed(1)), // 4.0 - 5.0
+          coverageType:
+            finalPrice > 250 ? "Premium Coverage" : "Standard Coverage",
+          limits: finalPrice > 250 ? "100/300/100" : "50/100/50",
+          perks: [
+            "24/7 Support",
+            finalPrice > 200 ? "Accident Forgiveness" : "Paperless Discount",
+            "Mobile App",
+          ],
+        };
+      })
+      .sort((a, b) => a.price - b.price); // Show cheapest first
 
-    // 4. Generate Quotes
-    const quotes = [
-      {
-        id: "1",
-        provider: "SafeDrive",
-        price: Math.round(finalRate * 0.9),
-        coverage: "Liability Only",
-        rating: 4.1,
-      },
-      {
-        id: "2",
-        provider: "AutoShield",
-        price: Math.round(finalRate * 1.3),
-        coverage: "Full Coverage",
-        rating: 4.9,
-      },
-      {
-        id: "3",
-        provider: "QuickInsure",
-        price: Math.round(finalRate * 1.1),
-        coverage: "Standard",
-        rating: 4.5,
-      },
-    ];
-
-    // Filter out providers for high-risk drivers (DUI)
-    const filteredQuotes = incidents.includes("dui")
-      ? quotes.filter((q) => q.provider !== "SafeDrive")
-      : quotes;
-
-    await new Promise((resolve) => setTimeout(resolve, 800)); // Artificial delay
+    // Simulate API network delay
+    await new Promise((resolve) => setTimeout(resolve, 1200));
 
     return {
       statusCode: 200,
-      body: JSON.stringify(filteredQuotes),
+      body: JSON.stringify(quotes),
     };
   } catch (error) {
-    return { statusCode: 500, body: "Internal Error" };
+    return { statusCode: 500, body: "Internal Server Error" };
   }
 };

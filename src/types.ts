@@ -1,19 +1,19 @@
 export interface FormData {
-  // Vehicle Data
   carYear?: number;
   carMake?: string;
   carModel?: string;
-
-  // Driver Data
   driverAge?: number;
   gender?: "male" | "female";
-  incidents?: string[]; // Array of keys like 'speeding', 'dui'
+  incidents?: string[];
 }
 
 export interface Quote {
   id: string;
-  provider: string;
+  provider: string; // e.g. "Geico"
+  logo: string; // URL to logo image
   price: number;
-  coverage: string;
+  coverageType: string; // e.g. "Premium", "Standard"
+  limits: string; // e.g. "100/300/100"
   rating: number;
+  perks: string[];
 }
